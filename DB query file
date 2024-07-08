@@ -1,0 +1,96 @@
+var pg = require('pg');
+var PropertiesReader = require('properties-reader');
+var properties = PropertiesReader('config.properties');
+
+ let client; let tollerclient;let qlPlClient;let pchnClient;
+export class DbQuery {
+	constructor() {
+		//Toller DB details
+		console.log("db connected enterance");
+		
+		 tollerclient = new pg.Client({
+			host: '10.87.1.7',
+			port: 5432,
+			database: 'q_weberwmstroller_mgmt',
+			user: 'q_weberwmstroller_mgmt',
+			password: 'k93qHAVvue15',
+			connectionTimeoutMillis: 150000	  
+		})
+		 //Boards Db details
+		 qlPlClient=new pg.Client({
+		 	host: '10.87.1.85',port: 5432,database: 'q_I1P1',user: 'q_I1P1',password: 'TSByrOLYnYWhenaLBUTHmeSchi',connectionTimeoutMillis: 150000
+	    })
+		// //weber PCHN cheenai palntDB details
+		 pchnClient=new pg.Client({
+		 	host: '10.87.1.7',port: 5432,database: 'q_weberwms_mgmt',user: 'q_weberwms_mgmt',password: 'BfKkEgzWLQRcMQJTU8nZ',connectionTimeoutMillis: 150000
+	    })
+		tollerclient.connect();
+	    qlPlClient.connect();
+		pchnClient.connect();
+	}
+/**
+Get the entire row of data from Database
+Input : passing the SQL Query 
+Output : return the entire row of data 
+   /** Get the entire row of data from Database*
+ * @param {string} query
+ * @param {string} dbName
+ * @return {*}
+ */
+	async selectTableRow(query) {
+		client = await this.selectDbDomain(dbName);
+		let response;
+		try {
+			response = await client.query(query);
+		}
+		catch (error) {
+			response = { "": "" };
+			console.log('Error occurs while retrive the Data. The Error message is ' + await error.message);
+		}
+		return JSON.stringify(response.rows);
+	}
+/**
+Get the specific column data from Database
+Input : passing the SQL Query and column Name
+Output : return the data from entered Column 
+
+ */
+	async selectTableColumn(query,colName,dbName) {
+		client = await this.selectDbDomain(dbName);
+		console.log("select the table column entered");
+		let response, data;
+		try {
+			response = await client.query(query);
+			data = response.rows[0][colName];
+			console.log("The data is " + data);
+			console.log("select the table column value printed");
+		}
+		catch (error) {
+			console.log('Error occurs while retrive the Data. The Error message is ' + await error.message);
+		}
+		return data;
+	}
+	
+  /** Get the connection based on the given domain*
+ * @param {string} dbName
+ * @return {*}
+ */
+  async selectDbDomain(dbName) {
+    switch (dbName) {
+      case 'q_I1P1':
+        client = qlPlClient;
+        break;
+      case 'q_weberwmstroller_mgmt':
+		console.log("domain entered");
+        client = tollerclient;
+        break;
+      case 'q_weberwms_mgmt':
+        client = pchnClient;
+        break;
+      default:
+        console.log('Err! No DataBase Connection is available based on the given Criteria.');
+        break;
+    }
+    return client;
+  }
+}
